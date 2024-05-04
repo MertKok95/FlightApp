@@ -1,0 +1,16 @@
+﻿@model List<FlightModel>
+
+@if(Model != null)
+{
+    <ul class="list-group">
+    @foreach(var item in Model)
+    {
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            @item.FlightDetailDto.OriginCountry - @item.FlightDetailDto.OriginCity / @item.FlightDetailDto.DestinationCountry - @item.FlightDetailDto.DestinationCity (Gidiş: @item.FlightDetailDto.DepartureDate.ToString(), Dönüş: @item.FlightDetailDto.DestinationDate.ToString())
+                <button type="button" onclick="GetTicket('@(item.FlightDetailDto.FlightNumber.ToString() ?? "")')" class="btn btn-primary btn-sm">Seç</button>
+        </li>
+    }
+</ul>
+
+
+}

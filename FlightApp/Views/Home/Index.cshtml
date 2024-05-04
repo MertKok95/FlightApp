@@ -1,0 +1,256 @@
+﻿@model FlightDto
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlightApp</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Uçak Bileti Satın Al</h1>
+        <form id="biletAlmaFormu">
+                <div class="row col-md-12">
+                    <div class="form-group col-md-6">
+                        <label for="originCountry">Kalkış Yeri</label>
+                        <select id="originCountry" class="form-control" onchange="getCities(1)">
+                            <option selected>Seçiniz...</option>
+                            @if (Model != null)
+                            {
+                                @foreach (var item in Model.Countries)
+                                {
+                                    <option value="@item.CountryId">@item.CountryName</option>
+                                }
+                            }
+                            <!-- Gerçek projede veritabanı üstünden foreach ile doldurulur-->
+                        </select>
+                    </div>
+                <div class="form-group col-md-6">
+                    <label for="destinationCountry">Varış Yeri</label>
+                    <select id="destinationCountry" class="form-control" onchange="getCities(2)">
+                        <option selected>Seçiniz...</option>
+                        @if (Model != null)
+                        {
+                            @foreach (var item in Model.Countries)
+                            {
+                                <option value="@item.CountryId">@item.CountryName</option>
+                            }
+                        }
+
+                        <!-- Gerçek projede veritabanı üstünden foreach ile doldurulur -->
+                    </select>
+                </div>
+                  
+                </div>
+
+            <div class="row col-md-12">
+                <div class="form-group col-md-6">
+                    <label for="originCity">Kalkış Şehri</label>
+                    <select id="originCities" class="form-control">
+                        <option selected>Seçiniz...</option>
+                    </select>
+                </div>
+               
+                <div class="form-group col-md-6">
+                    <label for="destinationCity">Varış Şehri</label>
+                    <select id="destinationCity" class="form-control">
+                        <option selected>Seçiniz...</option>
+                    </select>
+                </div>
+
+            </div>
+       
+            <div class="row col-md-12">
+                <div class="form-group col-md-6">
+                    <label for="inputGidisTarihi">Gidiş Tarihi</label>
+                    <input type="date" class="form-control" id="originDate">
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="inputDonusTarihi">Dönüş Tarihi</label>
+                    <input type="date" class="form-control" id="destinationDate">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:20px;">Bilet Al</button>
+        </form>
+
+        <!-- Bilet Seçenekleri Listesi -->
+        <div id="biletListesi" class="mt-5" style="display: none;">
+            <h2>Bilet Seçenekleri</h2>
+            <div id="ticketList">
+               
+            </div>
+
+
+            <!-- Sayfalama -->
+            <nav aria-label="Biletler Sayfalama">
+                <ul class="pagination justify-content-center mt-3">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Önceki</a>
+                    </li>
+                    <li class="page-item"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">Sonraki</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+
+    <!-- Modal -->
+    <div class="modal fade" id="ticketModal" tabindex="-1" role="dialog" aria-labelledby="ticketModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <!-- Başlık ve bilet alımı başarılı yazısı -->
+                    <h5 class="modal-title mr-4" id="ticketModalLabel">Bilet Detayları</h5>
+                    <span class="text-success ml-2">Bilet alımı başarılı</span>
+                </div>
+                <div class="modal-body">
+                    <!-- Bilet detayları buraya gelecek -->
+                    <p id="modalIdentification">Kullanıcı Kimliği :</p>
+                    <p id="modalTicketNumber">Bilet Numarası: </p>
+                    <p id="modalOriginLocation">Kalkış Yeri: </p>
+                    <p id="modalDepartureDate">Kalkış Tarihi: </p>
+                    <p id="modalArrivalLocation">Varış Yeri: </p>
+                    <p id="modalArrivalDate">Varış Tarihi: </p>
+                    <p id="modalPrice">Fiyatı: </p>
+                </div>
+                <!-- En alt sağ köşede modal kapatma butonu -->
+                <div class="modal-footer justify-content-end">
+                    <button type="button" class="btn btn-secondary" onclick="modalClose()">Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+
+        // Bilet Alma Formu Gönderildiğinde
+        $('#biletAlmaFormu').submit(function (event) {
+            event.preventDefault(); // Formun normal submit işlemini engelle
+
+            var originCountryId = document.getElementById("originCountry").value;
+            var destinationCountryId = document.getElementById("destinationCountry").value;
+            var originCityId = document.getElementById("originCities").value;
+            var destinationCityId = document.getElementById("destinationCity").value;
+            var originDate = document.getElementById("originDate").value;
+            var destinationDate = document.getElementById("destinationDate").value;
+
+            var requestData = {
+                OriginCountryId : originCountryId,
+                DestinationCountryId : destinationCountryId,
+                OriginCityId : originCityId,
+                DestinationCityId : destinationCityId,
+                DepartureDate : originDate,
+                ArrivalDate : destinationDate,
+            };
+
+            $.ajax({
+                url: '/Home/GetFlightOptions', // İstek yapılacak controller ve action
+                type: 'POST',
+                data: JSON.stringify(requestData),
+                contentType: 'application/json',
+                success: function (response) {
+                    $('#ticketList').html(response);
+                    $('#biletListesi').show();
+                },
+                error: function (xhr, status, error) {
+                    console.error('İstek hatası:', error);
+                }
+            });
+        });
+
+        function getCities(value){
+
+            let countryId = 0;
+            var citiesDropdown;
+
+            //value 1 ise kalkış ülkesi, 2 ise varış ülkesi için
+            if (value == 1) {
+                countryId = document.getElementById("originCountry").value;
+                citiesDropdown = document.getElementById("originCities");
+            } else if (value == 2) {
+                countryId = document.getElementById("destinationCountry").value;
+                citiesDropdown = document.getElementById("destinationCity");
+            }
+
+            $.ajax({
+                url: '/Home/GetCitiesByCountryId?countryId=' + countryId,
+                type: 'GET',
+                success: function (response) {
+                    if (response.status){
+                        citiesDropdown.innerHTML = ""; 
+                        response.data.forEach(function (city) {
+                            var option = document.createElement("option");
+                            option.text = city.cityName;
+                            option.value = city.cityId;
+                            citiesDropdown.add(option);
+                        });
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('İstek hatası:', error);
+                }
+            });
+        }
+
+        function GetTicket(flightNumber){
+
+            $.ajax({
+                url: '/Home/GetTicket',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(flightNumber),
+                success: function (response) {
+                    if (response.status) {
+                        showTicketDetails(response.data)
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('İstek hatası:', error);
+                }
+            });
+        }
+
+
+        function showTicketDetails(ticket) {
+            console.log(ticket)
+            
+            var originLocation = ticket.originCountry + "-" + ticket.originCity + "-" + ticket.originAirport;
+            var destinationLocation = ticket.destinationCountry + "-" + ticket.destinationCity + "-" + ticket.destinationAirport;
+            
+
+            // test senaryosu olduğu için kullanıcı varmış varsayılarak default bir değer verildi. 
+            var userId = "31245676567";
+
+
+            // Bilet detaylarını modal içine yerleştirme
+            $('#modalIdentification').text('Kullanıcı Kimliği: ' + userId);
+            $('#modalTicketNumber').text('Bilet Numarası: ' + ticket.flightNumber);
+            $('#modalOriginLocation').text('Kalkış Yeri: ' + originLocation);
+            $('#modalDepartureDate').text('Kalkış Tarihi: ' + ticket.departureDate.replace("T", " "));
+            $('#modalArrivalLocation').text('Varış Yeri: ' + destinationLocation);
+            $('#modalArrivalDate').text('Varış Tarihi: ' + ticket.destinationDate.replace("T", " "));
+            $('#modalPrice').text('Bilet Fiyatı: ' + ticket.price);
+
+            $('#ticketModal').modal('show');
+
+        }
+
+        function modalClose(){
+            $('#ticketModal').modal('hide');
+        }
+
+       
+    </script>
+</body>
+</html>
